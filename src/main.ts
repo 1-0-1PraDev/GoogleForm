@@ -17,11 +17,22 @@ const storageService = new StorageService();
 const formService = new FormService(storageService);
 const validationService = new ValidationService();
 
+// Check for saved theme preference or use device preference
+const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+const savedTheme = localStorage.getItem("theme");
+
 // Application state
 let currentForm: Form | null = null;
 let currentFieldId: string | null = null;
 let currentFieldType: FieldType | null = FieldType.TEXT;
 let isEditingField: boolean = false;
+
+// Apply the saved theme or default to user's device preference
+if (savedTheme === "dark" || (!savedTheme && prefersDarkScheme.matches)) {
+  document.documentElement.setAttribute("data-theme", "dark");
+} else {
+  document.documentElement.setAttribute("data-theme", "light");
+}
 
 // DOM Elements
 const mainContent = document.getElementById("mainContent") as HTMLElement;
@@ -99,6 +110,11 @@ const backToEditBtn = document.getElementById(
   "backToEditBtn"
 ) as HTMLButtonElement;
 
+// Theme Toggle Button
+const themeToggleBtn = document.getElementById(
+  "theme-toggle"
+) as HTMLButtonElement;
+
 // Navigation Event Listeners
 viewFormsBtn.addEventListener("click", () => {
   showView(formsListView);
@@ -110,6 +126,15 @@ viewFormsBtn.addEventListener("click", () => {
 createFormBtn.addEventListener("click", () => {
   // Don't create a new form automatically, just show the form builder view
   showView(formBuilderView);
+
+  // Just show the form builder view and reset fields
+  formTitle.value = "Untitled Form";
+  formDescription.value = "";
+  formFields.innerHTML = "";
+  currentForm = null; // Reset currentForm
+  fieldModal.classList.add("hidden");
+
+  currentForm = null; // Reset currentForm
 
   // Ensure modal is closed
   fieldModal.classList.add("hidden");
@@ -139,9 +164,12 @@ createFormBtn.addEventListener("click", () => {
 // Field Type Button Event Listeners
 fieldTypeButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    // If no current form, create one from the current title/description
     if (!currentForm) {
-      alert("Please save the form details first");
-      return;
+      currentForm = formService.createForm(
+        formTitle.value || "Untitled Form",
+        formDescription.value
+      );
     }
 
     const fieldType = button.getAttribute("data-type") as FieldType;
@@ -157,6 +185,9 @@ cancelFieldBtn.addEventListener("click", closeFieldModal);
 closeModalBtn.addEventListener("click", closeFieldModal);
 addOptionBtn.addEventListener("click", addOption);
 
+// Theme Toggle Button Event Listener
+themeToggleBtn.addEventListener("click", toggleTheme);
+
 // Form Action Buttons
 saveFormBtn.addEventListener("click", () => {
   console.log("saveFormBtn clicked");
@@ -164,27 +195,27 @@ saveFormBtn.addEventListener("click", () => {
 
   // Only create new form if there isn't a current form
   if (!currentForm) {
-    currentForm = formService.createForm("Untitled Form", "");
-    formTitle.value = currentForm.title;
-    formDescription.value = currentForm.description;
-    formFields.innerHTML = "";
-  }
-
-  if (currentForm) {
+    // First time saving - create new form
+    const newForm = formService.createForm(
+      formTitle.value || "Untitled Form",
+      formDescription.value
+    );
+    currentForm = newForm;
+  } else {
     // Update the form details one last time before saving
     currentForm = formService.updateFormDetails(
       currentForm.id,
       formTitle.value,
       formDescription.value
     );
-
-    alert("Form saved successfully!");
-    showView(formsListView);
-    loadFormsList();
-
-    // Reset currentForm after saving
-    currentForm = null;
   }
+
+  alert("Form saved successfully!");
+  showView(formsListView);
+  loadFormsList();
+
+  // Reset currentForm after saving
+  currentForm = null;
 });
 
 previewFormBtn.addEventListener("click", () => {
@@ -204,6 +235,34 @@ submitPreviewBtn.addEventListener("click", submitForm);
 loadFormsList();
 
 // Helper Functions
+
+// Theme Toggle Function
+function toggleTheme() {
+  const currentTheme: string | null =
+    document.documentElement.getAttribute("data-theme");
+  const newTheme: string = currentTheme === "light" ? "dark" : "light";
+
+  document.documentElement.setAttribute("data-theme", newTheme);
+  localStorage.setItem("theme", newTheme);
+
+  updateThemeIcon();
+}
+
+// Update button icon based on current theme
+function updateThemeIcon() {
+  const currentTheme: string | null =
+    document.documentElement.getAttribute("data-theme");
+  const themeIcon: HTMLElement | null = document.getElementById("theme-icon");
+
+  if (themeIcon) {
+    if (currentTheme === "dark") {
+      themeIcon.textContent = "☀️"; // Sun icon for light mode option
+    } else {
+      themeIcon.textContent = "🌙"; // Moon icon for dark mode option
+    }
+  }
+}
+
 function showView(view: HTMLElement) {
   // Hide all views
   formsListView.classList.add("hidden");

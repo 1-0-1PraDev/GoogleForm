@@ -1,5 +1,6 @@
 /* Base Styles */
 :root {
+  /* Light theme variables (default) */
   --primary-color: #4285f4;
   --primary-dark: #3367d6;
   --secondary-color: #fbbc05;
@@ -14,6 +15,42 @@
     0 2px 6px 2px rgba(60, 64, 67, 0.15);
 }
 
+[data-theme="dark"] {
+  /* Dark theme variables */
+  --primary-color: #8ab4f8;
+  --primary-dark: #669df6;
+  --secondary-color: #fdd663;
+  --text-color: #e8eaed;
+  --text-light: #9aa0a6;
+  --border-color: #3c4043;
+  --error-color: #f28b82;
+  --success-color: #81c995;
+  --bg-light: #202124;
+  --bg-white: #292a2d;
+  --shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .form-title-input,
+[data-theme="dark"] .form-description-input,
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  color: var(--text-color);
+}
+
+/* placeholder colors for dark mode */
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--text-light);
+}
+
+/* modal input colors for dark mode */
+[data-theme="dark"] .modal-content input[type="text"] {
+  background-color: var(--bg-light);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -25,6 +62,7 @@ body {
   color: var(--text-color);
   line-height: 1.5;
   background-color: var(--bg-light);
+  transition: all 0.3s ease;
 }
 
 .container {
@@ -188,6 +226,7 @@ nav {
 /* Form Builder View */
 .form-header {
   background-color: var(--bg-white);
+  color: var(--text-color);
   padding: 20px;
   border-radius: 8px;
   box-shadow: var(--shadow);
@@ -289,6 +328,7 @@ nav {
   background-color: var(--bg-white);
   cursor: pointer;
   text-align: center;
+  color: var(--text-color);
   transition: border-color 0.2s, transform 0.2s;
 }
 
@@ -410,4 +450,14 @@ nav {
 
 .hidden {
   display: none;
+}
+
+/* Theme Toggle button*/
+#theme-toggle {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px;
 }
