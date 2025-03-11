@@ -24,7 +24,7 @@ const savedTheme = localStorage.getItem("theme");
 // Application state
 let currentForm: Form | null = null;
 let currentFieldId: string | null = null;
-let currentFieldType: FieldType | null = FieldType.TEXT;
+let currentFieldType: FieldType | null = null;
 let isEditingField: boolean = false;
 
 // Apply the saved theme or default to user's device preference
