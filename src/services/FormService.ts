@@ -3,7 +3,7 @@
  * This service uses the StorageService for persistence.
  */
 
-import { StorageService } from "./StorageService";
+import { StorageService } from "./StorageService.js";
 import {
   Form,
   FormField,
@@ -11,10 +11,10 @@ import {
   FieldOption,
   FormSubmission,
   FieldResponse,
-} from "../interfaces/DataModal";
+} from "../interfaces/DataModal.js";
 
 export class FormService {
-  private storageService: StorageService;
+  private readonly storageService: StorageService;
 
   constructor(storageService: StorageService) {
     this.storageService = storageService;

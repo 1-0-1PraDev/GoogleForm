@@ -39,14 +39,23 @@ export class StorageService {
         if (form.id) {
             const existingFormIndex = forms.findIndex((f) => f.id === form.id);
             if (existingFormIndex >= 0) {
-                const updatedForm = Object.assign(Object.assign(Object.assign({}, forms[existingFormIndex]), form), { updatedAt: now });
+                const updatedForm = {
+                    ...forms[existingFormIndex],
+                    ...form,
+                    updatedAt: now,
+                };
                 forms[existingFormIndex] = updatedForm;
                 this.saveItems("forms", forms);
                 return updatedForm;
             }
         }
         // Otherwise, create a new form
-        const newForm = Object.assign(Object.assign({}, form), { id: form.id || this.generateId(), createdAt: now, updatedAt: now });
+        const newForm = {
+            ...form,
+            id: form.id || this.generateId(),
+            createdAt: now,
+            updatedAt: now,
+        };
         forms.push(newForm);
         this.saveItems("forms", forms);
         return newForm;

@@ -1,4 +1,4 @@
-import { Form, FieldResponse, FieldType } from "../interfaces/DataModal";
+import { Form, FieldResponse, FieldType } from "../interfaces/DataModal.js";
 
 export class ValidationService {
   /**

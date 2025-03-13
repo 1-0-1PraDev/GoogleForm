@@ -7,7 +7,7 @@ import {
   FormSubmission,
   FieldResponse,
   StorageKey,
-} from "../interfaces/DataModal";
+} from "../interfaces/DataModal.js";
 
 export class StorageService {
   private generateId(): string {

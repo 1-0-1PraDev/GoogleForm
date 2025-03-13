@@ -399,6 +399,10 @@ nav {
   margin-bottom: 20px;
 }
 
+#optionsContainer.form-group.hidden {
+  display: none;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 8px;
@@ -533,25 +537,25 @@ nav {
 /* media queries  */
 @media screen and (max-width: 600px) {
   header {
-    flex-direction: column; /* Stack elements vertically */
-    align-items: flex-start; /* Align items to the left */
+    flex-direction: column;
+    align-items: flex-start;
     padding: 15px 0;
   }
 
   nav {
-    width: 100%; /* Take full width */
-    justify-content: space-between; /* Space out the buttons */
+    width: 100%;
+    justify-content: space-between;
   }
 
   .nav-btn {
-    flex: 1; /* Make buttons take equal width */
+    flex: 1;
     text-align: center;
-    font-size: 14px; /* Slightly smaller font */
-    padding: 8px 12px; /* Adjust padding */
+    font-size: 14px;
+    padding: 8px 12px;
   }
 
   h1 {
-    font-size: 20px; /* Slightly smaller heading */
+    font-size: 20px;
   }
 }
 
@@ -560,5 +564,43 @@ nav {
   .nav-btn {
     padding: 6px 8px;
     font-size: 13px;
+  }
+}
+
+/* Notification Styles */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 4px;
+  background-color: var(--bg-white);
+  color: var(--text-color);
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+  max-width: 300px;
+}
+
+.notification.success {
+  border-left: 4px solid var(--success-color);
+}
+
+.notification.error {
+  border-left: 4px solid var(--error-color);
+}
+
+.notification.info {
+  border-left: 4px solid var(--primary-color);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }

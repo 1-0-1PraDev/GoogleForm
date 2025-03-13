@@ -1,8 +1,7 @@
 import "./styles.css";
 
-import { StorageService } from "./services/StorageService";
-import { FormService } from "./services/FormService";
-import { ValidationService } from "./services/ValidationService";
+import { StorageService } from "./services/StorageService.js";
+import { ValidationService } from "./services/ValidationService.js";
 import {
   Form,
   FieldType,
@@ -10,13 +9,15 @@ import {
   FormField,
   FieldResponse,
   FormSubmission,
-} from "./interfaces/DataModal";
+} from "./interfaces/DataModal.js";
+import { FormService } from "./services/FormService.js";
+import NotificationService from "./services/NotificationService.js";
 
 // Initialize services
 const storageService = new StorageService();
 const formService = new FormService(storageService);
 const validationService = new ValidationService();
-
+const notificationService = new NotificationService();
 // Check for saved theme preference or use device preference
 const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
 const savedTheme = localStorage.getItem("theme");
@@ -190,9 +191,6 @@ themeToggleBtn.addEventListener("click", toggleTheme);
 
 // Form Action Buttons
 saveFormBtn.addEventListener("click", () => {
-  console.log("saveFormBtn clicked");
-  console.log(currentForm);
-
   // Only create new form if there isn't a current form
   if (!currentForm) {
     // First time saving - create new form
@@ -210,7 +208,7 @@ saveFormBtn.addEventListener("click", () => {
     );
   }
 
-  alert("Form saved successfully!");
+  notificationService.showNotification("Form saved successfully!", "success");
   showView(formsListView);
   loadFormsList();
 
@@ -489,12 +487,9 @@ function openFieldModal(type: FieldType, field?: FormField) {
   fieldLabel.value = field?.label || "";
   fieldRequired.checked = field?.required || false;
 
-  // Show/hide options container based on field type
-  if (
-    type === FieldType.RADIO ||
-    type === FieldType.CHECKBOX ||
-    type === FieldType.DROPDOWN
-  ) {
+  if (type === FieldType.TEXT) {
+    optionsContainer.classList.add("hidden");
+  } else {
     optionsContainer.classList.remove("hidden");
 
     // Reset options list
@@ -510,10 +505,7 @@ function openFieldModal(type: FieldType, field?: FormField) {
       addOption();
       addOption();
     }
-  } else {
-    optionsContainer.classList.add("hidden");
   }
-
   // Update modal title
   modalTitle.textContent = isEditingField ? "Edit Field" : "Add New Field";
 
@@ -561,7 +553,10 @@ function saveField() {
 
   const label = fieldLabel.value.trim();
   if (!label) {
-    alert("Please enter a field label.");
+    notificationService.showNotification(
+      "Please enter a field label.",
+      "error"
+    );
     return;
   }
   console.log(currentForm);
@@ -613,6 +608,7 @@ function saveField() {
     );
   }
 
+  notificationService.showNotification("Field saved successfully.", "success");
   closeFieldModal();
   renderFormFields();
 }
@@ -752,11 +748,17 @@ function submitForm(e: Event) {
   const submission = formService.submitFormResponses(currentForm.id, responses);
 
   if (submission) {
-    alert("Form submitted successfully!");
+    notificationService.showNotification(
+      "Form submitted successfully!",
+      "success"
+    );
     showView(formsListView);
     loadFormsList();
   } else {
-    alert("An error occurred while submitting the form.");
+    notificationService.showNotification(
+      "An error occurred while submitting the form.",
+      "error"
+    );
   }
 }
 
@@ -769,6 +771,41 @@ function viewResponses(formId: string) {
   const submissions = formService.getFormSubmissions(formId);
 
   if (!form) return;
+
+  const exportResponsesBtn = document.getElementById(
+    "exportResponsesBtn"
+  ) as HTMLButtonElement;
+
+  // Remove existing event listeners to prevent duplicates
+  const newButton = exportResponsesBtn.cloneNode(true) as HTMLButtonElement;
+  exportResponsesBtn.parentNode?.replaceChild(newButton, exportResponsesBtn);
+
+  newButton.addEventListener("click", () => {
+    try {
+      const jsonData = exportResponsesToJSON(form, submissions);
+
+      // Create blob & download link
+      const blob = new Blob([jsonData], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${form.title || "form"}_response.json`;
+
+      // trigger download
+      document.body.appendChild(a);
+      a.click();
+
+      // cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.log(`Export error `, error);
+      notificationService.showNotification(
+        "Error exporting responses",
+        "error"
+      );
+    }
+  });
 
   const responsesFormTitle = document.getElementById(
     "responsesFormTitle"
@@ -868,14 +905,6 @@ function viewResponses(formId: string) {
       .join("");
   }
 
-  // Add event listener to export button
-  const exportResponsesBtn = document.getElementById(
-    "exportResponsesBtn"
-  ) as HTMLButtonElement;
-  exportResponsesBtn.addEventListener("click", () => {
-    // exportResponsesToJSON(form, submissions);
-  });
-
   // Add event listener to back button
   const backToFormsBtn = document.getElementById(
     "backToFormsBtn"
@@ -887,41 +916,58 @@ function viewResponses(formId: string) {
   showView(formResponsesView);
 }
 
-// function exportResponsesToJSON(form: Form, submissions: FormSubmission[]) {
-//     // Create a map of field IDs to field objects for easier lookup
-//     const fieldsMap = form.fields.reduce((map, field) => {
-//         map[field.id] = field;
-//         return map;
-//     }, {} as Record<string, FormField>);
+function exportResponsesToJSON(form: Form, submissions: FormSubmission[]) {
+  // Create a map of field IDs to field objects for easier lookup
+  const fieldsMap = form.fields.reduce((map, field) => {
+    map[field.id] = field;
+    return map;
+  }, {} as Record<string, FormField>);
 
-//     // Format the data for export
-//     const exportData = {
-//         formTitle: form.title,
-//         formDescription: form.description,
-//         submissions: submissions.map(submission => {
-//             const formattedResponses = submission.responses.reduce((formatted, response) => {
-//                 const field = fieldsMap[response.fieldId];
-//                 if (field) {
-//                     let value = response.value;
+  // Format the data for export
+  const exportData = {
+    formTitle: form.title,
+    formDescription: form.description,
+    submissions: submissions.map((submission) => {
+      const formattedResponses = submission.responses.reduce(
+        (formatted, response) => {
+          const field = fieldsMap[response.fieldId];
+          if (field) {
+            let value = response.value;
 
-//                     // For radio and dropdown, replace option ID with text
-//                     if ((field.type === FieldType.RADIO || field.type === FieldType.DROPDOWN) && typeof value === 'string') {
-//                         const option = field.options?.find(opt => opt.id === value);
-//                         value = option ? option.value : value;
-//                     }
+            // For radio and dropdown, replace option ID with text
+            if (
+              (field.type === FieldType.RADIO ||
+                field.type === FieldType.DROPDOWN) &&
+              typeof value === "string"
+            ) {
+              const option = field.options?.find((opt) => opt.id === value);
+              value = option ? option.value : value;
+            }
 
-//                     // For checkbox, replace option IDs with text
-//                     if (field.type === FieldType.CHECKBOX && Array.isArray(value)) {
-//                         value = value.map(id => {
-//                             const option = field.options?.find(opt => opt.id === id);
-//                             return option ? option.value : id;
-//                         });
-//                     }
+            // For checkbox, replace option IDs with text
+            if (field.type === FieldType.CHECKBOX && Array.isArray(value)) {
+              value = value.map((id) => {
+                const option = field.options?.find((opt) => opt.id === id);
+                return option ? option.value : id;
+              });
+            }
 
-//                     formatted[field.label] = value;
-//                 }
-//                 return formatted;
-//             }, {} as Record<string, any>);
+            formatted[field.label] = value;
+          }
+          return formatted;
+        },
+        {} as Record<string, any>
+      );
 
-//             return {
-//                 submissionDate: new Date(submission.submittedAt
+      return {
+        submissionDate: new Date(submission.submittedAt).toISOString(), // Ensuring ISO date format
+        responses: formattedResponses,
+      };
+    }),
+  };
+
+  // Convert the data to JSON format
+  const jsonString = JSON.stringify(exportData, null, 2);
+
+  return jsonString;
+}

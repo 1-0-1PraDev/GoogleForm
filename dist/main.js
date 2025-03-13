@@ -1,16 +1,29 @@
-import { StorageService } from "./services/StorageService";
-import { FormService } from "./services/FormService";
-import { ValidationService } from "./services/ValidationService";
-import { FieldType, } from "./interfaces/DataModal";
+import "./styles.css";
+import { StorageService } from "./services/StorageService.js";
+import { ValidationService } from "./services/ValidationService.js";
+import { FieldType, } from "./interfaces/DataModal.js";
+import { FormService } from "./services/FormService.js";
+import NotificationService from "./services/NotificationService.js";
 // Initialize services
 const storageService = new StorageService();
 const formService = new FormService(storageService);
 const validationService = new ValidationService();
+const notificationService = new NotificationService();
+// Check for saved theme preference or use device preference
+const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+const savedTheme = localStorage.getItem("theme");
 // Application state
 let currentForm = null;
 let currentFieldId = null;
-let currentFieldType = FieldType.TEXT;
+let currentFieldType = null;
 let isEditingField = false;
+// Apply the saved theme or default to user's device preference
+if (savedTheme === "dark" || (!savedTheme && prefersDarkScheme.matches)) {
+    document.documentElement.setAttribute("data-theme", "dark");
+}
+else {
+    document.documentElement.setAttribute("data-theme", "light");
+}
 // DOM Elements
 const mainContent = document.getElementById("mainContent");
 const viewFormsBtn = document.getElementById("viewFormsBtn");
@@ -47,23 +60,25 @@ const previewFormDescription = document.getElementById("previewFormDescription")
 const previewForm = document.getElementById("previewForm");
 const submitPreviewBtn = document.getElementById("submitPreviewBtn");
 const backToEditBtn = document.getElementById("backToEditBtn");
+// Theme Toggle Button
+const themeToggleBtn = document.getElementById("theme-toggle");
 // Navigation Event Listeners
 viewFormsBtn.addEventListener("click", () => {
     showView(formsListView);
     loadFormsList();
-    currentForm = null;
+    // currentForm = null;
 });
 // Create Form Button Event Listener.
 createFormBtn.addEventListener("click", () => {
     // Don't create a new form automatically, just show the form builder view
     showView(formBuilderView);
-    // Only create new form if there isn't a current form
-    // if (!currentForm) {
-    //   currentForm = formService.createForm("Untitled Form", "");
-    //   formTitle.value = currentForm.title;
-    //   formDescription.value = currentForm.description;
-    //   formFields.innerHTML = "";
-    // }
+    // Just show the form builder view and reset fields
+    formTitle.value = "Untitled Form";
+    formDescription.value = "";
+    formFields.innerHTML = "";
+    currentForm = null; // Reset currentForm
+    fieldModal.classList.add("hidden");
+    currentForm = null; // Reset currentForm
     // Ensure modal is closed
     fieldModal.classList.add("hidden");
 });
@@ -89,9 +104,14 @@ createFormBtn.addEventListener("click", () => {
 // Field Type Button Event Listeners
 fieldTypeButtons.forEach((button) => {
     button.addEventListener("click", () => {
+        // If no current form, create one from the current title/description
+        if (!currentForm) {
+            currentForm = formService.createForm(formTitle.value || "Untitled Form", formDescription.value);
+        }
         const fieldType = button.getAttribute("data-type");
-        currentFieldType = fieldType; //set the field type.
-        openFieldModal(fieldType); //open the modal.
+        if (fieldType) {
+            openFieldModal(fieldType);
+        }
     });
 });
 // Field Modal Event Listeners
@@ -99,17 +119,25 @@ saveFieldBtn.addEventListener("click", saveField);
 cancelFieldBtn.addEventListener("click", closeFieldModal);
 closeModalBtn.addEventListener("click", closeFieldModal);
 addOptionBtn.addEventListener("click", addOption);
+// Theme Toggle Button Event Listener
+themeToggleBtn.addEventListener("click", toggleTheme);
 // Form Action Buttons
 saveFormBtn.addEventListener("click", () => {
-    if (currentForm) {
+    // Only create new form if there isn't a current form
+    if (!currentForm) {
+        // First time saving - create new form
+        const newForm = formService.createForm(formTitle.value || "Untitled Form", formDescription.value);
+        currentForm = newForm;
+    }
+    else {
         // Update the form details one last time before saving
         currentForm = formService.updateFormDetails(currentForm.id, formTitle.value, formDescription.value);
-        alert("Form saved successfully!");
-        showView(formsListView);
-        loadFormsList();
-        // Reset currentForm after saving
-        currentForm = null;
     }
+    notificationService.showNotification("Form saved successfully!", "success");
+    showView(formsListView);
+    loadFormsList();
+    // Reset currentForm after saving
+    currentForm = null;
 });
 previewFormBtn.addEventListener("click", () => {
     if (currentForm) {
@@ -124,6 +152,27 @@ submitPreviewBtn.addEventListener("click", submitForm);
 // Initialize the application
 loadFormsList();
 // Helper Functions
+// Theme Toggle Function
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    const newTheme = currentTheme === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
+    updateThemeIcon();
+}
+// Update button icon based on current theme
+function updateThemeIcon() {
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    const themeIcon = document.getElementById("theme-icon");
+    if (themeIcon) {
+        if (currentTheme === "dark") {
+            themeIcon.textContent = "☀️"; // Sun icon for light mode option
+        }
+        else {
+            themeIcon.textContent = "🌙"; // Moon icon for dark mode option
+        }
+    }
+}
 function showView(view) {
     // Hide all views
     formsListView.classList.add("hidden");
@@ -304,14 +353,14 @@ function renderFormFields() {
 function openFieldModal(type, field) {
     currentFieldType = type;
     isEditingField = !!field;
-    currentFieldId = (field === null || field === void 0 ? void 0 : field.id) || null;
+    currentFieldId = field?.id || null;
     // Reset modal fields
-    fieldLabel.value = (field === null || field === void 0 ? void 0 : field.label) || "";
-    fieldRequired.checked = (field === null || field === void 0 ? void 0 : field.required) || false;
-    // Show/hide options container based on field type
-    if (type === FieldType.RADIO ||
-        type === FieldType.CHECKBOX ||
-        type === FieldType.DROPDOWN) {
+    fieldLabel.value = field?.label || "";
+    fieldRequired.checked = field?.required || false;
+    if (type === FieldType.TEXT) {
+        optionsContainer.classList.add("hidden");
+    }
+    else {
         optionsContainer.classList.remove("hidden");
         // Reset options list
         optionsList.innerHTML = "";
@@ -326,9 +375,6 @@ function openFieldModal(type, field) {
             addOption();
             addOption();
         }
-    }
-    else {
-        optionsContainer.classList.add("hidden");
     }
     // Update modal title
     modalTitle.textContent = isEditingField ? "Edit Field" : "Add New Field";
@@ -360,11 +406,13 @@ function addOptionToList(id, value) {
     optionsList.appendChild(optionItem);
 }
 function saveField() {
-    if (!currentForm || !currentFieldType)
+    if (!currentForm || !currentFieldType) {
+        alert("Please select a field type.");
         return;
+    }
     const label = fieldLabel.value.trim();
     if (!label) {
-        alert("Please enter a field label.");
+        notificationService.showNotification("Please enter a field label.", "error");
         return;
     }
     console.log(currentForm);
@@ -391,13 +439,17 @@ function saveField() {
     }
     if (isEditingField && currentFieldId) {
         // Update existing field
-        currentForm = formService.updateField(currentForm.id, currentFieldId, Object.assign({ label,
-            required }, (options.length ? { options } : {})));
+        currentForm = formService.updateField(currentForm.id, currentFieldId, {
+            label,
+            required,
+            ...(options.length ? { options } : {}),
+        });
     }
     else {
         // Add new field
         currentForm = formService.addField(currentForm.id, currentFieldType, label, required, options);
     }
+    notificationService.showNotification("Field saved successfully.", "success");
     closeFieldModal();
     renderFormFields();
 }
@@ -474,15 +526,15 @@ function submitForm(e) {
         switch (field.type) {
             case FieldType.TEXT:
                 const textInput = document.getElementById(`preview_${field.id}`);
-                value = (textInput === null || textInput === void 0 ? void 0 : textInput.value) || "";
+                value = textInput?.value || "";
                 break;
             case FieldType.RADIO:
                 const selectedRadio = document.querySelector(`input[name="${field.id}"]:checked`);
-                value = (selectedRadio === null || selectedRadio === void 0 ? void 0 : selectedRadio.value) || "";
+                value = selectedRadio?.value || "";
                 break;
             case FieldType.DROPDOWN:
                 const select = document.getElementById(`preview_${field.id}`);
-                value = (select === null || select === void 0 ? void 0 : select.value) || "";
+                value = select?.value || "";
                 break;
             case FieldType.CHECKBOX:
                 const checkboxes = document.querySelectorAll(`input[name="${field.id}"]:checked`);
@@ -503,12 +555,12 @@ function submitForm(e) {
     // Save the submission
     const submission = formService.submitFormResponses(currentForm.id, responses);
     if (submission) {
-        alert("Form submitted successfully!");
+        notificationService.showNotification("Form submitted successfully!", "success");
         showView(formsListView);
         loadFormsList();
     }
     else {
-        alert("An error occurred while submitting the form.");
+        notificationService.showNotification("An error occurred while submitting the form.", "error");
     }
 }
 function editField(field) {
@@ -519,6 +571,31 @@ function viewResponses(formId) {
     const submissions = formService.getFormSubmissions(formId);
     if (!form)
         return;
+    const exportResponsesBtn = document.getElementById("exportResponsesBtn");
+    // Remove existing event listeners to prevent duplicates
+    const newButton = exportResponsesBtn.cloneNode(true);
+    exportResponsesBtn.parentNode?.replaceChild(newButton, exportResponsesBtn);
+    newButton.addEventListener("click", () => {
+        try {
+            const jsonData = exportResponsesToJSON(form, submissions);
+            // Create blob & download link
+            const blob = new Blob([jsonData], { type: "application/json" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${form.title || "form"}_response.json`;
+            // trigger download
+            document.body.appendChild(a);
+            a.click();
+            // cleanup
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+        catch (error) {
+            console.log(`Export error `, error);
+            notificationService.showNotification("Error exporting responses", "error");
+        }
+    });
     const responsesFormTitle = document.getElementById("responsesFormTitle");
     const responsesSummary = document.getElementById("responsesSummary");
     const responsesList = document.getElementById("responsesList");
@@ -550,7 +627,6 @@ function viewResponses(formId) {
             // Format the responses
             const responseItems = submission.responses
                 .map((response) => {
-                var _a;
                 const field = fieldsMap[response.fieldId];
                 if (!field)
                     return ""; // Skip if field doesn't exist anymore
@@ -562,15 +638,14 @@ function viewResponses(formId) {
                     case FieldType.RADIO:
                     case FieldType.DROPDOWN:
                         const optionId = response.value;
-                        const option = (_a = field.options) === null || _a === void 0 ? void 0 : _a.find((opt) => opt.id === optionId);
+                        const option = field.options?.find((opt) => opt.id === optionId);
                         displayValue = option ? option.value : "Unknown option";
                         break;
                     case FieldType.CHECKBOX:
                         const optionIds = response.value;
                         displayValue = optionIds
                             .map((id) => {
-                            var _a;
-                            const option = (_a = field.options) === null || _a === void 0 ? void 0 : _a.find((opt) => opt.id === id);
+                            const option = field.options?.find((opt) => opt.id === id);
                             return option ? option.value : "Unknown option";
                         })
                             .join(", ");
@@ -598,11 +673,6 @@ function viewResponses(formId) {
         })
             .join("");
     }
-    // Add event listener to export button
-    const exportResponsesBtn = document.getElementById("exportResponsesBtn");
-    exportResponsesBtn.addEventListener("click", () => {
-        // exportResponsesToJSON(form, submissions);
-    });
     // Add event listener to back button
     const backToFormsBtn = document.getElementById("backToFormsBtn");
     backToFormsBtn.addEventListener("click", () => {
@@ -610,37 +680,47 @@ function viewResponses(formId) {
     });
     showView(formResponsesView);
 }
-// function exportResponsesToJSON(form: Form, submissions: FormSubmission[]) {
-//     // Create a map of field IDs to field objects for easier lookup
-//     const fieldsMap = form.fields.reduce((map, field) => {
-//         map[field.id] = field;
-//         return map;
-//     }, {} as Record<string, FormField>);
-//     // Format the data for export
-//     const exportData = {
-//         formTitle: form.title,
-//         formDescription: form.description,
-//         submissions: submissions.map(submission => {
-//             const formattedResponses = submission.responses.reduce((formatted, response) => {
-//                 const field = fieldsMap[response.fieldId];
-//                 if (field) {
-//                     let value = response.value;
-//                     // For radio and dropdown, replace option ID with text
-//                     if ((field.type === FieldType.RADIO || field.type === FieldType.DROPDOWN) && typeof value === 'string') {
-//                         const option = field.options?.find(opt => opt.id === value);
-//                         value = option ? option.value : value;
-//                     }
-//                     // For checkbox, replace option IDs with text
-//                     if (field.type === FieldType.CHECKBOX && Array.isArray(value)) {
-//                         value = value.map(id => {
-//                             const option = field.options?.find(opt => opt.id === id);
-//                             return option ? option.value : id;
-//                         });
-//                     }
-//                     formatted[field.label] = value;
-//                 }
-//                 return formatted;
-//             }, {} as Record<string, any>);
-//             return {
-//                 submissionDate: new Date(submission.submittedAt
+function exportResponsesToJSON(form, submissions) {
+    // Create a map of field IDs to field objects for easier lookup
+    const fieldsMap = form.fields.reduce((map, field) => {
+        map[field.id] = field;
+        return map;
+    }, {});
+    // Format the data for export
+    const exportData = {
+        formTitle: form.title,
+        formDescription: form.description,
+        submissions: submissions.map((submission) => {
+            const formattedResponses = submission.responses.reduce((formatted, response) => {
+                const field = fieldsMap[response.fieldId];
+                if (field) {
+                    let value = response.value;
+                    // For radio and dropdown, replace option ID with text
+                    if ((field.type === FieldType.RADIO ||
+                        field.type === FieldType.DROPDOWN) &&
+                        typeof value === "string") {
+                        const option = field.options?.find((opt) => opt.id === value);
+                        value = option ? option.value : value;
+                    }
+                    // For checkbox, replace option IDs with text
+                    if (field.type === FieldType.CHECKBOX && Array.isArray(value)) {
+                        value = value.map((id) => {
+                            const option = field.options?.find((opt) => opt.id === id);
+                            return option ? option.value : id;
+                        });
+                    }
+                    formatted[field.label] = value;
+                }
+                return formatted;
+            }, {});
+            return {
+                submissionDate: new Date(submission.submittedAt).toISOString(), // Ensuring ISO date format
+                responses: formattedResponses,
+            };
+        }),
+    };
+    // Convert the data to JSON format
+    const jsonString = JSON.stringify(exportData, null, 2);
+    return jsonString;
+}
 //# sourceMappingURL=main.js.map

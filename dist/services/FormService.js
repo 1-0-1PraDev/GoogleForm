@@ -4,6 +4,7 @@
  */
 import { FieldType, } from "../interfaces/DataModal.js";
 export class FormService {
+    storageService;
     constructor(storageService) {
         this.storageService = storageService;
     }
@@ -36,8 +37,11 @@ export class FormService {
         const form = this.getForm(id);
         if (!form)
             return null;
-        return this.storageService.saveForm(Object.assign(Object.assign({}, form), { title,
-            description }));
+        return this.storageService.saveForm({
+            ...form,
+            title,
+            description,
+        });
     }
     /**
      * Add a new field to a form
@@ -46,9 +50,18 @@ export class FormService {
         const form = this.getForm(formId);
         if (!form)
             return null;
-        const newField = Object.assign({ id: Date.now().toString(36) + Math.random().toString(36).substring(2), type: fieldType, label,
-            required, order: form.fields.length }, (fieldType !== FieldType.TEXT ? { options } : {}));
-        const updatedForm = Object.assign(Object.assign({}, form), { fields: [...form.fields, newField] });
+        const newField = {
+            id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+            type: fieldType,
+            label,
+            required,
+            order: form.fields.length,
+            ...(fieldType !== FieldType.TEXT ? { options } : {}),
+        };
+        const updatedForm = {
+            ...form,
+            fields: [...form.fields, newField],
+        };
         return this.storageService.saveForm(updatedForm);
     }
     /**
@@ -62,8 +75,14 @@ export class FormService {
         if (fieldIndex === -1)
             return null;
         const updatedFields = [...form.fields];
-        updatedFields[fieldIndex] = Object.assign(Object.assign({}, updatedFields[fieldIndex]), updates);
-        const updatedForm = Object.assign(Object.assign({}, form), { fields: updatedFields });
+        updatedFields[fieldIndex] = {
+            ...updatedFields[fieldIndex],
+            ...updates,
+        };
+        const updatedForm = {
+            ...form,
+            fields: updatedFields,
+        };
         return this.storageService.saveForm(updatedForm);
     }
     /**
@@ -78,7 +97,10 @@ export class FormService {
         updatedFields.forEach((field, index) => {
             field.order = index;
         });
-        const updatedForm = Object.assign(Object.assign({}, form), { fields: updatedFields });
+        const updatedForm = {
+            ...form,
+            fields: updatedFields,
+        };
         return this.storageService.saveForm(updatedForm);
     }
     /**
@@ -99,8 +121,14 @@ export class FormService {
             return map;
         }, {});
         // Reorder fields based on the new order
-        const reorderedFields = fieldIds.map((id, index) => (Object.assign(Object.assign({}, fieldsMap[id]), { order: index })));
-        const updatedForm = Object.assign(Object.assign({}, form), { fields: reorderedFields });
+        const reorderedFields = fieldIds.map((id, index) => ({
+            ...fieldsMap[id],
+            order: index,
+        }));
+        const updatedForm = {
+            ...form,
+            fields: reorderedFields,
+        };
         return this.storageService.saveForm(updatedForm);
     }
     /**
