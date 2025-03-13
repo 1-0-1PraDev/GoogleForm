@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite --host",
     "build": "tsc && vite build",
+    "deploy": "gh-pages -d dist",
     "preview": "vite preview"
   },
   "homepage": "https://1-0-1pradev.github.io/GoogleForm/",

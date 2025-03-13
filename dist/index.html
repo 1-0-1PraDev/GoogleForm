@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Builder</title>
+    <script type="module" crossorigin src="/GoogleForm/assets/index-CR2yyYup.js"></script>
+    <link rel="stylesheet" crossorigin href="/GoogleForm/assets/index-l7DLQxuc.css">
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Form Builder</h1>
+        <nav>
+          <button id="viewFormsBtn" class="nav-btn active">View Forms</button>
+          <button id="createFormBtn" class="nav-btn">Create Form</button>
+
+          <button id="theme-toggle" aria-label="Toggle dark mode">
+            <span id="theme-icon">🌙</span>
+          </button>
+        </nav>
+      </header>
+
+      <main id="mainContent">
+        <!-- Forms List View -->
+        <section id="formsListView" class="view">
+          <h2>Your Forms</h2>
+          <div class="forms-container" id="formsList">
+            <!-- Forms will be loaded here -->
+            <p class="empty-state" id="emptyFormsList">
+              You don't have any forms yet. Create a new form to get started.
+            </p>
+          </div>
+        </section>
+
+        <!-- Form Builder View -->
+        <section id="formBuilderView" class="view hidden">
+          <div class="form-header">
+            <input
+              type="text"
+              id="formTitle"
+              placeholder="Untitled Form"
+              class="form-title-input"
+            />
+            <textarea
+              id="formDescription"
+              placeholder="Form Description"
+              class="form-description-input"
+            ></textarea>
+          </div>
+
+          <div class="form-fields" id="formFields">
+            <!-- Form fields will be added here -->
+          </div>
+
+          <div class="add-field-container">
+            <h3>Add a New Field</h3>
+            <div class="field-type-selector">
+              <button class="field-type-btn" data-type="text">
+                Text Field
+              </button>
+              <button class="field-type-btn" data-type="radio">
+                Multiple Choice
+              </button>
+              <button class="field-type-btn" data-type="checkbox">
+                Checkboxes
+              </button>
+              <button class="field-type-btn" data-type="dropdown">
+                Dropdown
+              </button>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button id="saveFormBtn" class="primary-btn">Save Form</button>
+            <button id="previewFormBtn" class="secondary-btn">Preview</button>
+          </div>
+        </section>
+
+        <!-- Form Preview View -->
+        <section id="formPreviewView" class="view hidden">
+          <div class="form-preview-header">
+            <h2 id="previewFormTitle">Form Title</h2>
+            <p id="previewFormDescription">Form Description</p>
+          </div>
+
+          <form id="previewForm" class="preview-form">
+            <!-- Form fields will be rendered here -->
+          </form>
+
+          <div class="form-actions">
+            <button id="submitPreviewBtn" class="primary-btn">Submit</button>
+            <button id="backToEditBtn" class="secondary-btn">
+              Back to Edit
+            </button>
+          </div>
+        </section>
+
+        <!-- Form Responses View -->
+        <section id="formResponsesView" class="view hidden">
+          <h2 id="responsesFormTitle">Responses for Form</h2>
+
+          <div class="responses-summary" id="responsesSummary">
+            <!-- Summary stats will go here -->
+          </div>
+
+          <div class="responses-list" id="responsesList">
+            <!-- Individual responses will be listed here -->
+          </div>
+
+          <div class="form-actions">
+            <button id="backToFormsBtn" class="secondary-btn">
+              Back to Forms
+            </button>
+            <button id="exportResponsesBtn" class="primary-btn">
+              Export Responses
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Modal for Creating/Editing Fields -->
+    <div id="fieldModal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2 id="modalTitle">Add New Field</h2>
+
+        <div class="field-form">
+          <div class="form-group">
+            <label for="fieldLabel">Field Label/Question</label>
+            <input
+              type="text"
+              id="fieldLabel"
+              placeholder="Enter your question here"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="fieldRequired">
+              <input type="checkbox" id="fieldRequired" />
+              Required Field
+            </label>
+          </div>
+
+          <div id="optionsContainer" class="form-group hidden">
+            <label>Options</label>
+            <div id="optionsList">
+              <!-- Options will be added here -->
+            </div>
+            <button id="addOptionBtn" class="secondary-btn small">
+              + Add Option
+            </button>
+          </div>
+
+          <div class="modal-actions">
+            <button id="saveFieldBtn" class="primary-btn">Save Field</button>
+            <button id="cancelFieldBtn" class="secondary-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+  </body>
+</html>
+ 
