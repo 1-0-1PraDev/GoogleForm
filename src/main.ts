@@ -120,7 +120,6 @@ const themeToggleBtn = document.getElementById(
 viewFormsBtn.addEventListener("click", () => {
   showView(formsListView);
   loadFormsList();
-  // currentForm = null;
 });
 
 // Create Form Button Event Listener.
@@ -141,26 +140,7 @@ createFormBtn.addEventListener("click", () => {
   fieldModal.classList.add("hidden");
 });
 
-// Form Builder Event Listeners
-// formTitle.addEventListener("change", () => {
-//   if (currentForm) {
-//     currentForm = formService.updateFormDetails(
-//       currentForm.id,
-//       formTitle.value,
-//       formDescription.value
-//     );
-//   }
-// });
 
-// formDescription.addEventListener("change", () => {
-//   if (currentForm) {
-//     currentForm = formService.updateFormDetails(
-//       currentForm.id,
-//       formTitle.value,
-//       formDescription.value
-//     );
-//   }
-// });
 
 // Field Type Button Event Listeners
 fieldTypeButtons.forEach((button) => {
@@ -374,7 +354,7 @@ function editForm(formId: string) {
 function renderFormFields() {
   if (!currentForm) return;
 
-  formFields.innerHTML = currentForm.fields
+  formFields.innerHTML = [...currentForm.fields]
     .sort((a, b) => a.order - b.order)
     .map((field) => {
       let fieldContent = "";
@@ -481,10 +461,10 @@ function renderFormFields() {
 function openFieldModal(type: FieldType, field?: FormField) {
   currentFieldType = type;
   isEditingField = !!field;
-  currentFieldId = field?.id || null;
+  currentFieldId = field?.id ?? null;
 
   // Reset modal fields
-  fieldLabel.value = field?.label || "";
+  fieldLabel.value = field?.label ?? "";
   fieldRequired.checked = field?.required || false;
 
   if (type === FieldType.TEXT) {
@@ -579,7 +559,7 @@ function saveField() {
     }
 
     options = Array.from(optionInputs).map((input) => ({
-      id: input.getAttribute("data-id") || "",
+      id: input.getAttribute("data-id") ?? "",
       value: input.value.trim(),
     }));
 
@@ -592,7 +572,7 @@ function saveField() {
 
   if (isEditingField && currentFieldId) {
     // Update existing field
-    currentForm = formService.updateField(currentForm!.id, currentFieldId, {
+    currentForm = formService.updateField(currentForm.id, currentFieldId, {
       label,
       required,
       ...(options.length ? { options } : {}),
@@ -701,30 +681,34 @@ function submitForm(e: Event) {
     let value: string | string[] = "";
 
     switch (field.type) {
-      case FieldType.TEXT:
+      case FieldType.TEXT: {
         const textInput = document.getElementById(
           `preview_${field.id}`
         ) as HTMLInputElement;
         value = textInput?.value || "";
         break;
-      case FieldType.RADIO:
+      }
+      case FieldType.RADIO: {
         const selectedRadio = document.querySelector(
           `input[name="${field.id}"]:checked`
         ) as HTMLInputElement;
         value = selectedRadio?.value || "";
         break;
-      case FieldType.DROPDOWN:
+      }
+      case FieldType.DROPDOWN: {
         const select = document.getElementById(
           `preview_${field.id}`
         ) as HTMLSelectElement;
         value = select?.value || "";
         break;
-      case FieldType.CHECKBOX:
+      }
+      case FieldType.CHECKBOX: {
         const checkboxes = document.querySelectorAll(
           `input[name="${field.id}"]:checked`
         ) as NodeListOf<HTMLInputElement>;
         value = Array.from(checkboxes).map((cb) => cb.value);
         break;
+      }
     }
 
     responses.push({
@@ -859,14 +843,15 @@ function viewResponses(formId: string) {
                 displayValue = response.value as string;
                 break;
               case FieldType.RADIO:
-              case FieldType.DROPDOWN:
+              case FieldType.DROPDOWN: {
                 const optionId = response.value as string;
                 const option = field.options?.find(
                   (opt: any) => opt.id === optionId
                 );
                 displayValue = option ? option.value : "Unknown option";
                 break;
-              case FieldType.CHECKBOX:
+              }
+              case FieldType.CHECKBOX: {
                 const optionIds = response.value as string[];
                 displayValue = optionIds
                   .map((id) => {
@@ -877,6 +862,7 @@ function viewResponses(formId: string) {
                   })
                   .join(", ");
                 break;
+              }
             }
 
             return `

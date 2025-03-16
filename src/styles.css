@@ -424,7 +424,6 @@ nav {
 .preview-form .preview-field .preview-field-content .option-item {
   display: flex;
   align-items: center;
-  /* margin-bottom: 10px; */
 }
 
 .form-field .field-content .option-preview {
@@ -435,7 +434,7 @@ nav {
 
 .form-field .field-content .option-preview input[type="checkbox"],
 .form-field .field-content .option-preview input[type="radio"] {
-  width: 10%;
+  width: 3%;
 }
 
 .form-field .field-content .preview-select,
@@ -463,7 +462,6 @@ nav {
 }
 
 .option-item input {
-  /* flex: 1; */
   margin-right: 10px;
 }
 
@@ -532,6 +530,86 @@ nav {
   align-items: center;
   justify-content: flex-start;
   margin: 0.5rem 0;
+}
+
+/* Response Cards Styles */
+.responses-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.response-card {
+  background-color: var(--bg-white);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  transition: transform 0.2s ease;
+}
+
+.response-card:hover {
+  transform: translateY(-3px);
+}
+
+.response-timestamp {
+  color: var(--text-light);
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.response-item {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.response-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.response-question {
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 5px;
+}
+
+.response-answer {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.responses-summary {
+  background-color: var(--bg-white);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-stat {
+  display: inline-block;
+  margin-right: 30px;
+  padding: 15px;
+  border-radius: 6px;
+  background-color: var(--bg-light);
+}
+
+.stat-label {
+  color: var(--text-light);
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 /* media queries  */
