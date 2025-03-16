@@ -66,7 +66,6 @@ const themeToggleBtn = document.getElementById("theme-toggle");
 viewFormsBtn.addEventListener("click", () => {
     showView(formsListView);
     loadFormsList();
-    // currentForm = null;
 });
 // Create Form Button Event Listener.
 createFormBtn.addEventListener("click", () => {
@@ -82,25 +81,6 @@ createFormBtn.addEventListener("click", () => {
     // Ensure modal is closed
     fieldModal.classList.add("hidden");
 });
-// Form Builder Event Listeners
-// formTitle.addEventListener("change", () => {
-//   if (currentForm) {
-//     currentForm = formService.updateFormDetails(
-//       currentForm.id,
-//       formTitle.value,
-//       formDescription.value
-//     );
-//   }
-// });
-// formDescription.addEventListener("change", () => {
-//   if (currentForm) {
-//     currentForm = formService.updateFormDetails(
-//       currentForm.id,
-//       formTitle.value,
-//       formDescription.value
-//     );
-//   }
-// });
 // Field Type Button Event Listeners
 fieldTypeButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -265,7 +245,7 @@ function editForm(formId) {
 function renderFormFields() {
     if (!currentForm)
         return;
-    formFields.innerHTML = currentForm.fields
+    formFields.innerHTML = [...currentForm.fields]
         .sort((a, b) => a.order - b.order)
         .map((field) => {
         let fieldContent = "";
@@ -353,9 +333,9 @@ function renderFormFields() {
 function openFieldModal(type, field) {
     currentFieldType = type;
     isEditingField = !!field;
-    currentFieldId = field?.id || null;
+    currentFieldId = field?.id ?? null;
     // Reset modal fields
-    fieldLabel.value = field?.label || "";
+    fieldLabel.value = field?.label ?? "";
     fieldRequired.checked = field?.required || false;
     if (type === FieldType.TEXT) {
         optionsContainer.classList.add("hidden");
@@ -428,7 +408,7 @@ function saveField() {
             return;
         }
         options = Array.from(optionInputs).map((input) => ({
-            id: input.getAttribute("data-id") || "",
+            id: input.getAttribute("data-id") ?? "",
             value: input.value.trim(),
         }));
         // Check for empty options
@@ -524,22 +504,26 @@ function submitForm(e) {
     currentForm.fields.forEach((field) => {
         let value = "";
         switch (field.type) {
-            case FieldType.TEXT:
+            case FieldType.TEXT: {
                 const textInput = document.getElementById(`preview_${field.id}`);
                 value = textInput?.value || "";
                 break;
-            case FieldType.RADIO:
+            }
+            case FieldType.RADIO: {
                 const selectedRadio = document.querySelector(`input[name="${field.id}"]:checked`);
                 value = selectedRadio?.value || "";
                 break;
-            case FieldType.DROPDOWN:
+            }
+            case FieldType.DROPDOWN: {
                 const select = document.getElementById(`preview_${field.id}`);
                 value = select?.value || "";
                 break;
-            case FieldType.CHECKBOX:
+            }
+            case FieldType.CHECKBOX: {
                 const checkboxes = document.querySelectorAll(`input[name="${field.id}"]:checked`);
                 value = Array.from(checkboxes).map((cb) => cb.value);
                 break;
+            }
         }
         responses.push({
             fieldId: field.id,
@@ -636,12 +620,13 @@ function viewResponses(formId) {
                         displayValue = response.value;
                         break;
                     case FieldType.RADIO:
-                    case FieldType.DROPDOWN:
+                    case FieldType.DROPDOWN: {
                         const optionId = response.value;
                         const option = field.options?.find((opt) => opt.id === optionId);
                         displayValue = option ? option.value : "Unknown option";
                         break;
-                    case FieldType.CHECKBOX:
+                    }
+                    case FieldType.CHECKBOX: {
                         const optionIds = response.value;
                         displayValue = optionIds
                             .map((id) => {
@@ -650,6 +635,7 @@ function viewResponses(formId) {
                         })
                             .join(", ");
                         break;
+                    }
                 }
                 return `
                     <div class="response-item">
